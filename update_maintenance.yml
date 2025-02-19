@@ -1,0 +1,37 @@
+---
+- name: Actualizar y mantener sistemas
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Actualizar lista de paquetes
+      apt:
+        update_cache: yes
+
+    - name: Actualizar todos los paquetes
+      apt:
+        upgrade: dist
+
+    - name: Limpiar paquetes antiguos
+      apt:
+        autoremove: yes
+        autoclean: yes
+
+    - name: Limpiar la caché de APT
+      apt:
+        autoclean: yes
+
+    - name: Reiniciar el sistema si es necesario (solo para máquinas Ubuntu)
+      reboot:
+      when: ansible_facts['os_family'] == "Debian" and ansible_facts['distribution'] == "Ubuntu"
+
+    - name: Realizar tareas de mantenimiento adicionales en Proxmox
+      when: ansible_facts['os_family'] == "Debian" and ansible_facts['distribution'] == "Debian"
+      block:
+        - name: Comprobar el estado de los servicios de Proxmox
+          shell: pvecm status
+
+        - name: Actualizar Proxmox
+          apt:
+            name: proxmox-ve
+            state: latest
